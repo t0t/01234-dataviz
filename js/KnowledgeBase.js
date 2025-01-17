@@ -7,12 +7,13 @@ class KnowledgeBase {
         this.padding = 40;
         this.center = { x: this.width / 2, y: this.height / 2 };
         this.orbitRadius = Math.min(this.width, this.height) / 3;
-        this.dataPath = 'data/entries.json';
+        this.dataPath = '/data/entries.json';
         
         this.setupGraph();
         this.loadData().then(() => {
             this.setupEventListeners();
             this.renderEntries();
+            this.updateGraph();
         });
 
         window.kb = this;
@@ -68,11 +69,15 @@ class KnowledgeBase {
 
     async loadData() {
         try {
+            console.log('Loading data from:', this.dataPath);
             const response = await fetch(this.dataPath);
+            
             if (!response.ok) {
-                throw new Error(`Error loading data from ${this.dataPath}`);
+                throw new Error(`Error loading data from ${this.dataPath}: ${response.statusText}`);
             }
+            
             const data = await response.json();
+            console.log('Loaded data:', data);
             
             // Asegurar que tenemos la estructura correcta
             this.data = {
@@ -83,9 +88,13 @@ class KnowledgeBase {
                 }
             };
             
-            // Actualizar la vista con los datos cargados
-            this.updateGraph();
-            this.renderEntries();
+            console.log('Processed data:', this.data);
+            
+            if (this.data.entries.length > 0) {
+                console.log(`Loaded ${this.data.entries.length} entries`);
+            } else {
+                console.log('No entries found in data');
+            }
         } catch (error) {
             console.error('Error loading data:', error);
             // Mantener datos existentes si hay error al cargar
