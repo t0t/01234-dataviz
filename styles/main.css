@@ -1,3 +1,36 @@
+:root {
+    /* Colors */
+    --color-background: #1a1a1a;
+    --color-text: #ffffff;
+    --color-stroke: #ffffff;
+    --color-link: rgba(255, 255, 255, 0.4);
+    --color-orbit: rgba(255, 255, 255, 0.1);
+    
+    /* Node Properties */
+    --node-radius: 20px;
+    --node-radius-expanded: 80px;
+    --node-stroke-width: 2px;
+    --node-stroke-width-expanded: 3px;
+    --node-shadow: drop-shadow(0 0 3px rgba(255,255,255,0.3));
+    
+    /* Text Properties */
+    --text-size: 12px;
+    --text-size-expanded: 14px;
+    --text-shadow: 0 0 3px #000;
+    
+    /* Animation */
+    --transition-duration: 0.3s;
+    --transition-timing: ease;
+    
+    /* Link Properties */
+    --link-width: 1.5px;
+    --link-width-hover: 2.5px;
+    
+    /* Orbit Properties */
+    --orbit-dash: 5,5;
+    --orbit-animation-duration: 60s;
+}
+
 * { 
     box-sizing: border-box; 
     margin: 0; 
@@ -6,8 +39,8 @@
 
 body { 
     font-family: -apple-system, BlinkMacSystemFont, sans-serif; 
-    background: #1a1a1a;
-    color: #fff;
+    background: var(--color-background);
+    color: var(--color-text);
     overflow: hidden;
 }
 
@@ -15,29 +48,29 @@ body {
     width: 100vw;
     height: 100vh;
     display: block;
-    background: #1a1a1a;
+    background: var(--color-background);
 }
 
 /* Graph elements */
 .node circle {
-    stroke: #fff;
-    stroke-width: 2px;
-    filter: drop-shadow(0 0 3px rgba(255,255,255,0.3));
-    transition: all 0.3s ease;
+    stroke: var(--color-stroke);
+    stroke-width: var(--node-stroke-width);
+    filter: var(--node-shadow);
+    transition: all var(--transition-duration) var(--transition-timing);
 }
 
 .node:hover circle {
-    r: 25;
+    r: calc(var(--node-radius) * 1.25);
 }
 
 .node text {
-    fill: white;
-    font-size: 12px;
+    fill: var(--color-text);
+    font-size: var(--text-size);
     text-anchor: middle;
     font-weight: bold;
-    text-shadow: 0 0 3px #000;
+    text-shadow: var(--text-shadow);
     opacity: 0.7;
-    transition: all 0.3s ease;
+    transition: all var(--transition-duration) var(--transition-timing);
     pointer-events: none;
 }
 
@@ -46,19 +79,19 @@ body {
 }
 
 .node.expanded circle {
-    r: 80;
-    fill: rgba(255, 255, 255, 0.1);
-    stroke-width: 3px;
+    r: var(--node-radius-expanded);
+    fill: var(--color-orbit);
+    stroke-width: var(--node-stroke-width-expanded);
 }
 
 .node.expanded text {
-    font-size: 14px;
+    font-size: var(--text-size-expanded);
     opacity: 1;
 }
 
 .node-content {
     opacity: 0;
-    transition: opacity 0.3s ease;
+    transition: opacity var(--transition-duration) var(--transition-timing);
     pointer-events: none;
 }
 
@@ -67,22 +100,22 @@ body {
 }
 
 .link {
-    stroke: rgba(255, 255, 255, 0.4);
-    stroke-width: 1.5px;
-    transition: stroke-opacity 0.3s ease;
+    stroke: var(--color-link);
+    stroke-width: var(--link-width);
+    transition: stroke-opacity var(--transition-duration) var(--transition-timing);
 }
 
 .link:hover {
     stroke-opacity: 0.8;
-    stroke-width: 2.5px;
+    stroke-width: var(--link-width-hover);
 }
 
 .orbit {
     fill: none;
-    stroke: #fff;
+    stroke: var(--color-stroke);
     stroke-opacity: 0.1;
-    stroke-dasharray: 5,5;
-    animation: rotate 60s linear infinite;
+    stroke-dasharray: var(--orbit-dash);
+    animation: rotate var(--orbit-animation-duration) linear infinite;
 }
 
 @keyframes rotate {
