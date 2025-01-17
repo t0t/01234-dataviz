@@ -8,6 +8,8 @@ class KnowledgeBase {
         this.center = { x: this.width / 2, y: this.height / 2 };
         this.orbitRadius = Math.min(this.width, this.height) / 3;
         this.dataPath = 'data/entries.json';
+        this.container = document.getElementById('knowledge-graph');
+        this.sidebar = document.getElementById('sidebar');
         
         this.setupGraph();
         this.loadData().then(() => {
@@ -319,12 +321,9 @@ class KnowledgeBase {
     }
 
     setupEventListeners() {
-        const toggleBtn = document.getElementById('toggle-sidebar');
-        const sidebar = document.getElementById('sidebar');
-        
-        toggleBtn.addEventListener('click', () => {
-            sidebar.classList.toggle('open');
-            toggleBtn.classList.toggle('active');
+        const toggleButton = document.getElementById('toggle-sidebar');
+        toggleButton.addEventListener('click', () => {
+            this.sidebar.classList.toggle('open');
         });
         document.getElementById('save').addEventListener('click', () => this.saveEntry());
         document.getElementById('new-entry').addEventListener('click', () => this.newEntry());

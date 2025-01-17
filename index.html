@@ -1,63 +1,144 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Knowledge Base D3 Force</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&display=swap" rel="stylesheet">
+    <title>Knowledge Base</title>
     <link rel="stylesheet" href="styles/main.css">
-    <script src="https://d3js.org/d3.v7.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 
 <body>
-    <header>
-        <h1>Knowledge Base D3 Force</h1>
-        <button id="toggle-sidebar">☰</button>
-    </header>
-    <div id="sidebar" class="sidebar">
-        <div id="sidebar-content">
-            <h2>Knowledge Base</h2>
+    <nav style="position: fixed" class="mainnav"> logo +
+        <button id="toggle-sidebar" aria-label="Toggle Sidebar"></button>
+    </nav>
 
-            <!-- Panel de Edición -->
-            <div id="edit-panel">
-                <h3>Edit Entry</h3>
-                <textarea id="content-editor" placeholder="Write your content here..."></textarea>
+    <!-- App Section -->
+    <div id="app" class="app hidden">
+        <div id="sidebar">
+            <div id="entry-details"></div>
+            <div id="editor">
+                <textarea id="content-editor" placeholder="Write your entry here..."></textarea>
                 <input type="text" id="tags-input" placeholder="Tags (comma separated)">
-                <div class="button-group">
-                    <button id="save" class="primary">Save</button>
+                <div class="actions">
                     <button id="new-entry">New Entry</button>
-                    <button id="export-pdf">Export PDF</button>
+                    <button id="save">Save</button>
                 </div>
             </div>
-
-            <!-- Panel de Detalles -->
-            <div id="entry-details"></div>
-
-            <!-- Lista de Entradas -->
-            <div id="entries-list"></div>
         </div>
     </div>
-    </header>
-    <svg id="canvas"></svg>
-    <main>
-        <section>
-            Hero image
-        </section>
-    </main>
+
+
+    <!-- Canvas -->
+    <section>
+        <canvas id="nodes-canvas"></canvas>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features">
+        <h2>Features</h2>
+        <div class="features-grid">
+            <div class="feature">
+                <h3>Visual Organization</h3>
+                <p>See your knowledge as an interactive network of connected ideas.</p>
+            </div>
+            <div class="feature">
+                <h3>Smart Connections</h3>
+                <p>Automatically discover relationships between your notes.</p>
+            </div>
+            <div class="feature">
+                <h3>Easy Editing</h3>
+                <p>Simple and intuitive interface for managing your knowledge base.</p>
+            </div>
+        </div>
+    </section>
 
     <script src="js/KnowledgeBase.js"></script>
     <script>
-        // Inicialización
-        const kb = new KnowledgeBase();
-        kb.initialize();
-    </script>
-    <script>
-        document.write('<script src="http://' + (location.host || 'localhost').split(':')[0] +
-            ':35729/livereload.js?snipver=1"></' + 'script>')
+        document.addEventListener('DOMContentLoaded', () => {
+            // Toggle sidebar y app
+            document.getElementById('toggle-sidebar').addEventListener('click', () => {
+                document.getElementById('app').classList.toggle('hidden');
+                document.getElementById('sidebar').classList.toggle('open');
+            });
+
+            // Inicializar el canvas de nodos
+            const canvas = document.getElementById('nodes-canvas');
+            const ctx = canvas.getContext('2d');
+
+            // Ajustar tamaño del canvas
+            function resizeCanvas() {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+            }
+            resizeCanvas();
+            window.addEventListener('resize', resizeCanvas);
+
+            // Iniciar animación de nodos
+            const nodes = [];
+            const numNodes = 20;
+            const nodeRadius = 5;
+            const connectionDistance = 150;
+
+            // Crear nodos iniciales
+            for (let i = 0; i < numNodes; i++) {
+                nodes.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    vx: (Math.random() - 0.5) * 2,
+                    vy: (Math.random() - 0.5) * 2
+                });
+            }
+
+            function animate() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                // Actualizar y dibujar nodos
+                nodes.forEach(node => {
+                    // Actualizar posición
+                    node.x += node.vx;
+                    node.y += node.vy;
+
+                    // Rebotar en los bordes
+                    if (node.x < 0 || node.x > canvas.width) node.vx *= -1;
+                    if (node.y < 0 || node.y > canvas.height) node.vy *= -1;
+
+                    // Dibujar nodo
+                    ctx.beginPath();
+                    ctx.arc(node.x, node.y, nodeRadius, 0, Math.PI * 2);
+                    ctx.fillStyle = '#2196F3';
+                    ctx.fill();
+                });
+
+                // Dibujar conexiones
+                nodes.forEach((node, i) => {
+                    nodes.slice(i + 1).forEach(otherNode => {
+                        const dx = otherNode.x - node.x;
+                        const dy = otherNode.y - node.y;
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+
+                        if (distance < connectionDistance) {
+                            ctx.beginPath();
+                            ctx.moveTo(node.x, node.y);
+                            ctx.lineTo(otherNode.x, otherNode.y);
+                            ctx.strokeStyle = `rgba(33, 150, 243, ${1 - distance / connectionDistance})`;
+                            ctx.stroke();
+                        }
+                    });
+                });
+
+                requestAnimationFrame(animate);
+            }
+
+            animate();
+
+            // Manejar el botón de inicio
+            document.getElementById('start-button').addEventListener('click', () => {
+                document.querySelector('.hero').classList.add('hidden');
+                document.getElementById('app').classList.remove('hidden');
+                window.kb = new KnowledgeBase();
+            });
+        });
     </script>
 </body>
 
