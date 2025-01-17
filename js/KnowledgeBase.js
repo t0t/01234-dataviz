@@ -7,6 +7,7 @@ class KnowledgeBase {
         this.padding = 40;
         this.center = { x: this.width / 2, y: this.height / 2 };
         this.orbitRadius = Math.min(this.width, this.height) / 3;
+        this.dataPath = 'data/entries.json';
         
         this.setupGraph();
         this.loadData().then(() => {
@@ -18,40 +19,122 @@ class KnowledgeBase {
     }
 
     setupGraph() {
-        this.svg = d3.select("#canvas");
+        this.svg = d3.select("#canvas")
+            .attr("width", this.width)
+            .attr("height", this.height);
+
+        // Añadir órbita
+        this.svg.append("circle")
+            .attr("class", "orbit")
+            .attr("cx", this.center.x)
+            .attr("cy", this.center.y)
+            .attr("r", this.orbitRadius)
+            .style("fill", "none")
+            .style("stroke", "#fff")
+            .style("stroke-opacity", 0.1);
+
         this.g = this.svg.append("g");
 
-        // Configurar fuerzas de simulación
+        // Configurar fuerzas de simulación con parámetros mejorados
         this.simulation = d3.forceSimulation()
-            .force("link", d3.forceLink().id(d => d.id).distance(100))
-            .force("charge", d3.forceManyBody().strength(-300))
+            .force("link", d3.forceLink().id(d => d.id)
+                .distance(100)
+                .strength(0.2))
+            .force("charge", d3.forceManyBody()
+                .strength(-150)
+                .distanceMax(300))
             .force("center", d3.forceCenter(this.width / 2, this.height / 2))
-            .force("collision", d3.forceCollide().radius(this.nodeRadius * 1.5));
+            .force("collision", d3.forceCollide().radius(40))
+            .alphaDecay(0.05)
+            .velocityDecay(0.4);
 
-        // Zoom
+        // Zoom mejorado
         const zoom = d3.zoom()
+            .extent([[0, 0], [this.width, this.height]])
             .scaleExtent([0.1, 4])
             .on("zoom", (event) => {
                 this.g.attr("transform", event.transform);
             });
 
         this.svg.call(zoom);
+        
+        // Doble click para centrar
+        this.svg.on("dblclick.zoom", () => {
+            this.svg.transition()
+                .duration(750)
+                .call(zoom.transform, d3.zoomIdentity);
+        });
     }
 
     async loadData() {
         try {
-            const response = await fetch('data/entries.json');
-            this.data = await response.json();
+            const response = await fetch(this.dataPath);
+            if (!response.ok) {
+                throw new Error(`Error loading data from ${this.dataPath}`);
+            }
+            const data = await response.json();
+            
+            // Asegurar que tenemos la estructura correcta
+            this.data = {
+                entries: data.entries || [],
+                metadata: data.metadata || {
+                    lastUpdate: new Date().toISOString(),
+                    version: "1.0"
+                }
+            };
+            
+            // Actualizar la vista con los datos cargados
             this.updateGraph();
+            this.renderEntries();
         } catch (error) {
             console.error('Error loading data:', error);
-            this.data = { entries: [] };
+            // Mantener datos existentes si hay error al cargar
+            if (!this.data) {
+                this.data = { 
+                    entries: [],
+                    metadata: {
+                        lastUpdate: new Date().toISOString(),
+                        version: "1.0"
+                    }
+                };
+            }
+        }
+    }
+
+    async saveData() {
+        try {
+            // Actualizar metadata
+            this.data.metadata = {
+                ...this.data.metadata,
+                lastUpdate: new Date().toISOString()
+            };
+
+            const response = await fetch('/save', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(this.data, null, 2)
+            });
+
+            if (!response.ok) {
+                throw new Error('Error saving data');
+            }
+
+            // Recargar datos después de guardar para asegurar consistencia
+            await this.loadData();
+            
+            return true;
+        } catch (error) {
+            console.error('Error saving data:', error);
+            return false;
         }
     }
 
     updateGraph() {
         const nodes = this.data.entries;
         const links = this.generateLinks(nodes);
+        
+        // Limpiar el gráfico antes de actualizar
+        this.g.selectAll("*").remove();
         
         this.drawLinks(links);
         this.drawNodes(nodes);
@@ -60,16 +143,30 @@ class KnowledgeBase {
 
     generateLinks(nodes) {
         const links = [];
-        const nodeMap = new Map(nodes.map(node => [node.id, node]));
-
-        nodes.forEach(source => {
-            nodes.forEach(target => {
-                if (source.id !== target.id) {
-                    // Crear enlaces basados en tags comunes
-                    const commonTags = source.tags.filter(tag => target.tags.includes(tag));
-                    if (commonTags.length > 0) {
-                        links.push({ source: source.id, target: target.id, value: commonTags.length });
-                    }
+        
+        nodes.forEach((source, i) => {
+            nodes.slice(i + 1).forEach(target => {
+                // Buscar palabras comunes en el contenido
+                const sourceWords = source.content.toLowerCase().split(/\s+/);
+                const targetWords = target.content.toLowerCase().split(/\s+/);
+                const commonWords = sourceWords.filter(word => 
+                    word.length > 4 && targetWords.includes(word)
+                );
+                
+                // Buscar tags comunes
+                const commonTags = source.tags.filter(tag => 
+                    target.tags.includes(tag)
+                );
+                
+                // Si hay palabras o tags en común, crear enlace
+                if (commonWords.length > 0 || commonTags.length > 0) {
+                    links.push({
+                        source: source.id,
+                        target: target.id,
+                        value: commonWords.length + commonTags.length,
+                        commonWords,
+                        commonTags
+                    });
                 }
             });
         });
@@ -226,19 +323,33 @@ class KnowledgeBase {
         window.addEventListener('resize', () => this.onResize());
     }
 
-    async saveData() {
-        try {
-            const response = await fetch('save', {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(this.data)
+    renderEntries(entries = this.data.entries) {
+        const list = document.getElementById('entries-list');
+        
+        // Ordenar entradas por fecha de modificación
+        const sortedEntries = [...entries].sort((a, b) => 
+            new Date(b.modified) - new Date(a.modified)
+        );
+
+        list.innerHTML = sortedEntries.map(entry => `
+            <div class="entry-item" data-id="${entry.id}">
+                <div class="entry-content">${entry.content.substring(0, 100)}${entry.content.length > 100 ? '...' : ''}</div>
+                <div class="entry-meta">Modified: ${new Date(entry.modified).toLocaleString()}</div>
+                <div class="entry-tags">
+                    ${entry.tags.map(tag => `<span class="tag">${tag}</span>`).join('')}
+                </div>
+            </div>
+        `).join('');
+
+        // Añadir eventos de clic a las entradas
+        list.querySelectorAll('.entry-item').forEach(item => {
+            item.addEventListener('click', () => {
+                const entry = this.data.entries.find(e => e.id === item.dataset.id);
+                if (entry) {
+                    this.handleNodeClick(entry);
+                }
             });
-            if (!response.ok) throw new Error('Error saving data');
-            this.renderEntries();
-            this.updateGraph();
-        } catch (error) {
-            console.error('Error saving data:', error);
-        }
+        });
     }
 
     newEntry() {
@@ -314,18 +425,6 @@ class KnowledgeBase {
                 entryDetails.innerHTML = '';
             }
         }, 2000);
-    }
-
-    renderEntries(entries = this.data.entries) {
-        const list = document.getElementById('entries-list');
-        list.innerHTML = entries.map(entry => `
-            <div class="entry-item" onclick="kb.editEntry('${entry.id}')">
-                <div>${entry.content.substring(0, 50)}...</div>
-                <div class="tags">
-                    ${entry.tags.map(tag => `<span class="tag">${tag}</span>`).join('')}
-                </div>
-            </div>
-        `).join('');
     }
 
     editEntry(id) {
