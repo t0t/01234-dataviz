@@ -34,14 +34,15 @@ class KnowledgeBase {
 
         this.simulation = d3.forceSimulation()
             .force("link", d3.forceLink().id(d => d.id)
-                .distance(d => 100 + (d.value * 10)) // Distancia basada en similitud
-                .strength(0.3)) // Reducir fuerza de enlaces
+                .distance(100)
+                .strength(0.2))
             .force("charge", d3.forceManyBody()
-                .strength(-200)) // Reducir repulsión
+                .strength(-150)
+                .distanceMax(300))
             .force("center", d3.forceCenter(this.width / 2, this.height / 2))
-            .force("radial", d3.forceRadial(this.orbitRadius, this.width / 2, this.height / 2)
-                .strength(0.3)) // Reducir fuerza radial
-            .force("collision", d3.forceCollide().radius(40));
+            .force("collision", d3.forceCollide().radius(40))
+            .alphaDecay(0.05) // Más lento pero más estable
+            .velocityDecay(0.4); // Más amortiguación
 
         this.g = this.svg.append("g");
 
@@ -185,154 +186,119 @@ class KnowledgeBase {
 
         // Círculo base
         node.append("circle")
-            .attr("r", 20)
-            .style("fill", (d, i) => d3.interpolateRainbow(i / nodes.length));
+            .attr("r", this.nodeRadius);
 
-        // Texto principal (título)
+        // Texto del nodo
         node.append("text")
-            .attr("dy", -25)
-            .text(d => d.content.substring(0, 10));
-
-        // Contenido completo (inicialmente oculto)
-        const content = node.append("g")
-            .attr("class", "node-content");
-
-        content.append("text")
-            .attr("dy", 0)
-            .text(d => d.content)
-            .call(this.wrapText, 120);
-
-        // Tags
-        content.append("text")
-            .attr("dy", 30)
-            .text(d => d.tags.join(", "));
+            .attr("dy", ".35em")
+            .text(d => d.content.substring(0, 15) + "...");
 
         // Evento de clic
-        node.on("click", (event, d) => this.handleNodeClick(event, d));
-
-        // Clic en el fondo para cerrar nodo expandido
-        this.svg.on("click", () => {
-            this.g.selectAll(".node").classed("expanded", false);
-            this.simulation.alphaTarget(0.3).restart();
+        node.on("click", (event, d) => {
+            event.stopPropagation();
+            this.handleNodeClick(event, d);
         });
 
         return node;
     }
 
-    handleNodeClick(d) {
-        const isExpanded = d3.select(d.currentTarget).classed('expanded');
+    handleNodeClick(event, d) {
+        // Desactivar cualquier nodo expandido previamente
+        const wasExpanded = d3.select(event.currentTarget).classed("expanded");
+        this.g.selectAll(".node").classed("expanded", false);
         
-        // Contraer todos los nodos
-        this.svg.selectAll('.node').classed('expanded', false);
-        
-        if (!isExpanded) {
-            // Expandir el nodo clickeado
-            d3.select(d.currentTarget).classed('expanded', true);
+        if (!wasExpanded) {
+            // Expandir el nodo actual
+            d3.select(event.currentTarget).classed("expanded", true);
             
-            // Mostrar sidebar con detalles
+            // Mostrar detalles en el sidebar
             const sidebar = document.getElementById('sidebar');
             const entryDetails = document.getElementById('entry-details');
             
-            // Formatear contenido para el sidebar
-            const entry = d.target.__data__;
-            const formattedDate = new Date(entry.modified).toLocaleString();
+            const formattedDate = new Date(d.modified).toLocaleString();
             
             entryDetails.innerHTML = `
                 <div class="entry-item">
-                    <div class="entry-content">${entry.content}</div>
+                    <div class="entry-content">${d.content}</div>
                     <div class="entry-meta">Modified: ${formattedDate}</div>
                     <div class="entry-tags">
-                        ${entry.tags.map(tag => `<span class="tag">${tag}</span>`).join('')}
+                        ${d.tags.map(tag => `<span class="tag">${tag}</span>`).join('')}
                     </div>
                 </div>
             `;
             
             sidebar.classList.add('open');
+            document.getElementById('toggle-sidebar').classList.add('active');
         } else {
             // Cerrar sidebar
             document.getElementById('sidebar').classList.remove('open');
+            document.getElementById('toggle-sidebar').classList.remove('active');
         }
-        
-        // Pausar simulación cuando un nodo está expandido
-        if (this.simulation) {
-            if (!isExpanded) {
-                this.simulation.alpha(0.1).restart();
-            } else {
-                this.simulation.alpha(0);
-            }
-        }
-    }
-
-    // Función auxiliar para envolver texto
-    wrapText(text, width) {
-        text.each(function() {
-            const text = d3.select(this);
-            const words = text.text().split(/\s+/);
-            const lineHeight = 20;
-            const y = text.attr("y");
-            const dy = parseFloat(text.attr("dy"));
-            
-            text.text(null);
-            
-            let line = [];
-            let lineNumber = 0;
-            let tspan = text.append("tspan")
-                .attr("x", 0)
-                .attr("y", y)
-                .attr("dy", dy + "px");
-            
-            words.forEach(word => {
-                line.push(word);
-                tspan.text(line.join(" "));
-                
-                if (tspan.node().getComputedTextLength() > width) {
-                    line.pop();
-                    tspan.text(line.join(" "));
-                    line = [word];
-                    tspan = text.append("tspan")
-                        .attr("x", 0)
-                        .attr("y", y)
-                        .attr("dy", ++lineNumber * lineHeight + dy + "px")
-                        .text(word);
-                }
-            });
-        });
     }
 
     setupSimulation(nodes, links) {
+        // Detener simulación anterior si existe
+        if (this.simulation) this.simulation.stop();
+
         this.simulation
             .nodes(nodes)
             .force("link").links(links);
 
+        // Añadir fuerza de colisión
+        this.simulation.force("collision", d3.forceCollide().radius(this.nodeRadius * 2));
+
+        // Fuerza de centro
+        this.simulation.force("center", d3.forceCenter(this.width / 2, this.height / 2));
+
+        // Mantener nodos dentro de los límites
         this.simulation.force("bounds", () => {
-            for (let node of nodes) {
-                node.x = Math.max(this.nodeRadius + this.padding, 
-                                Math.min(this.width - this.nodeRadius - this.padding, node.x));
-                node.y = Math.max(this.nodeRadius + this.padding, 
-                                Math.min(this.height - this.nodeRadius - this.padding, node.y));
-            }
+            nodes.forEach(node => {
+                node.x = Math.max(this.nodeRadius, Math.min(this.width - this.nodeRadius, node.x));
+                node.y = Math.max(this.nodeRadius, Math.min(this.height - this.nodeRadius, node.y));
+            });
         });
 
-        this.simulation.on("tick", () => this.onTick());
+        this.simulation.on("tick", () => {
+            // Actualizar posición de enlaces
+            this.g.selectAll(".link")
+                .attr("x1", d => d.source.x)
+                .attr("y1", d => d.source.y)
+                .attr("x2", d => d.target.x)
+                .attr("y2", d => d.target.y);
+
+            // Actualizar posición de nodos
+            this.g.selectAll(".node")
+                .attr("transform", d => `translate(${d.x},${d.y})`);
+        });
+
+        // Reiniciar simulación
         this.simulation.alpha(1).restart();
     }
 
-    onTick() {
-        this.g.selectAll(".link")
-            .attr("x1", d => d.source.x)
-            .attr("y1", d => d.source.y)
-            .attr("x2", d => d.target.x)
-            .attr("y2", d => d.target.y);
+    dragstarted(event, d) {
+        if (!event.active) this.simulation.alphaTarget(0.3).restart();
+        d.fx = d.x;
+        d.fy = d.y;
+    }
 
-        this.g.selectAll(".node")
-            .attr("transform", d => `translate(${d.x},${d.y})`);
+    dragged(event, d) {
+        d.fx = event.x;
+        d.fy = event.y;
+    }
+
+    dragended(event, d) {
+        if (!event.active) this.simulation.alphaTarget(0);
+        d.fx = null;
+        d.fy = null;
     }
 
     setupEventListeners() {
-        document.getElementById('toggle-sidebar').addEventListener('click', () => {
-            document.getElementById('sidebar').classList.toggle('open');
-            const button = document.getElementById('toggle-sidebar');
-            button.textContent = button.textContent === '☰' ? '×' : '☰';
+        const toggleBtn = document.getElementById('toggle-sidebar');
+        const sidebar = document.getElementById('sidebar');
+        
+        toggleBtn.addEventListener('click', () => {
+            sidebar.classList.toggle('open');
+            toggleBtn.classList.toggle('active');
         });
         document.getElementById('save').addEventListener('click', () => this.saveEntry());
         document.getElementById('new-entry').addEventListener('click', () => this.newEntry());
@@ -458,24 +424,5 @@ class KnowledgeBase {
         });
 
         doc.save('knowledge-base-export.pdf');
-    }
-
-    dragstarted(event, d) {
-        if (!event.active) this.simulation.alphaTarget(0.3).restart();
-        d.fx = d.x;
-        d.fy = d.y;
-    }
-
-    dragged(event, d) {
-        d.fx = Math.max(this.nodeRadius + this.padding, 
-                     Math.min(this.width - this.nodeRadius - this.padding, event.x));
-        d.fy = Math.max(this.nodeRadius + this.padding, 
-                     Math.min(this.height - this.nodeRadius - this.padding, event.y));
-    }
-
-    dragended(event, d) {
-        if (!event.active) this.simulation.alphaTarget(0);
-        d.fx = null;
-        d.fy = null;
     }
 }

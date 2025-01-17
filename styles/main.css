@@ -37,7 +37,7 @@
     --spacing-xl: 32px;
 
     /* Layout */
-    --sidebar-width: 300px;
+    --sidebar-width: 350px;
     --border-radius-sm: 4px;
     --border-radius-md: 8px;
     --border-radius-lg: 16px;
@@ -50,24 +50,24 @@
     --blur-effect: blur(10px);
 
     /* Transitions */
-    --transition-fast: 0.2s ease;
-    --transition-normal: 0.3s ease;
-    --transition-slow: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-quick: 150ms ease;
+    --transition-normal: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-slow: 500ms cubic-bezier(0.4, 0, 0.2, 1);
 
     /* Node Properties */
-    --node-size-normal: 30px;
-    --node-size-hover: 35px;
-    --node-size-expanded: 120px;
-    --node-stroke-width: 1.5px;
-    --node-stroke-width-hover: 2px;
-    --node-opacity-normal: 0.8;
+    --node-size: 20px;
+    --node-size-hover: 25px;
+    --node-size-expanded: 30px;
+    --node-stroke-width: 2px;
+    --node-stroke-width-hover: 3px;
+    --node-opacity-normal: 0.9;
     --node-opacity-hover: 1;
 
     /* Link Properties */
     --link-stroke-width: 1px;
     --link-stroke-width-hover: 2px;
-    --link-opacity: 0.2;
-    --link-opacity-hover: 0.4;
+    --link-opacity: 0.6;
+    --link-opacity-hover: 0.8;
 
     /* Animation */
     --animation-duration: 60s;
@@ -105,16 +105,17 @@ body {
     stroke-width: var(--node-stroke-width);
     fill: var(--color-dark);
     opacity: var(--node-opacity-normal);
-    transition: all var(--transition-slow);
+    transition: all var(--transition-normal);
     cursor: pointer;
+    r: var(--node-size);
+    will-change: transform;
 }
 
 .node:hover circle {
-    r: var(--node-size-hover);
     stroke-width: var(--node-stroke-width-hover);
     fill: var(--color-secondary);
     opacity: var(--node-opacity-hover);
-    transform: scale(1.1);
+    r: var(--node-size-hover);
 }
 
 .node text {
@@ -123,8 +124,9 @@ body {
     font-weight: var(--font-weight-medium);
     text-anchor: middle;
     opacity: var(--node-opacity-normal);
-    transition: all var(--transition-slow);
+    transition: all var(--transition-normal);
     letter-spacing: var(--letter-spacing);
+    pointer-events: none;
 }
 
 .node.expanded circle {
@@ -179,6 +181,7 @@ body {
     transform: translateX(100%);
     transition: transform var(--transition-normal);
     overflow-y: auto;
+    will-change: transform;
 }
 
 .sidebar.open {
@@ -276,12 +279,18 @@ button:hover {
     justify-content: center;
     font-size: var(--font-size-xl);
     transition: all var(--transition-normal);
+    will-change: transform;
 }
 
-#toggle-sidebar:hover {
+#toggle-sidebar:hover,
+#toggle-sidebar.active {
     background: var(--color-secondary);
     color: var(--color-light);
     transform: rotate(90deg);
+}
+
+#toggle-sidebar.active {
+    right: calc(var(--sidebar-width) + var(--spacing-lg));
 }
 
 /* Graph elements */
