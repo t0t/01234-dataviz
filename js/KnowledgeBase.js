@@ -1,24 +1,29 @@
 class KnowledgeBase {
     constructor() {
-        this.width = window.innerWidth;
-        this.height = window.innerHeight;
-        this.currentEntry = null;
-        this.nodeRadius = 20;
-        this.padding = 40;
-        this.center = { x: this.width / 2, y: this.height / 2 };
-        this.orbitRadius = Math.min(this.width, this.height) / 3;
-        this.dataPath = 'data/entries.json';
-        this.container = document.getElementById('knowledge-graph');
-        this.sidebar = document.getElementById('sidebar');
+        this.data = { entries: [] };
+        this.dataPath = 'data.json';
         
-        this.setupGraph();
-        this.loadData().then(() => {
+        // Esperar a que el DOM esté cargado
+        document.addEventListener('DOMContentLoaded', () => {
+            this.width = window.innerWidth;
+            this.height = window.innerHeight;
+            this.currentEntry = null;
+            this.nodeRadius = 20;
+            this.padding = 40;
+            this.center = { x: this.width / 2, y: this.height / 2 };
+            this.orbitRadius = Math.min(this.width, this.height) / 3;
+            this.container = document.getElementById('knowledge-graph');
+            this.sidebar = document.getElementById('sidebar');
+            
+            this.setupGraph();
             this.setupEventListeners();
-            this.renderEntries();
-            this.updateGraph();
-        });
+            this.loadData().then(() => {
+                this.renderEntries();
+                this.updateGraph();
+            });
 
-        window.kb = this;
+            window.kb = this;
+        });
     }
 
     setupGraph() {

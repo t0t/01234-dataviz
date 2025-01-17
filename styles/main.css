@@ -92,12 +92,12 @@ body {
     line-height: var(--line-height);
     background: var(--color-background);
     color: var(--color-text);
-    overflow: auto;
+    overflow: hidden;
 }
 
 html {
     height: 100%;
-    overflow: auto;
+    overflow: hidden;
 }
 
 /* Layout */

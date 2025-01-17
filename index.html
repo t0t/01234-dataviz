@@ -1,15 +1,17 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Knowledge Base</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
     <link rel="stylesheet" href="styles/main.css">
 </head>
 
 <body>
-    <nav style="position: fixed" class="mainnav"> logo +
+    <nav style="position: fixed" class="mainnav grid">
+        <img src="images/logo.png" alt="Logo" class="logo">
         <button id="toggle-sidebar" aria-label="Toggle Sidebar"></button>
     </nav>
 
@@ -56,11 +58,17 @@
     <script src="js/KnowledgeBase.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            // Inicializar KnowledgeBase
+            const kb = new KnowledgeBase();
+            
             // Toggle sidebar y app
-            document.getElementById('toggle-sidebar').addEventListener('click', () => {
-                document.getElementById('app').classList.toggle('hidden');
-                document.getElementById('sidebar').classList.toggle('open');
-            });
+            const toggleButton = document.getElementById('toggle-sidebar');
+            if (toggleButton) {
+                toggleButton.addEventListener('click', () => {
+                    document.getElementById('app').classList.toggle('hidden');
+                    document.getElementById('sidebar').classList.toggle('open');
+                });
+            }
 
             // Inicializar el canvas de nodos
             const canvas = document.getElementById('nodes-canvas');
@@ -133,11 +141,14 @@
             animate();
 
             // Manejar el botón de inicio
-            document.getElementById('start-button').addEventListener('click', () => {
-                document.querySelector('.hero').classList.add('hidden');
-                document.getElementById('app').classList.remove('hidden');
-                window.kb = new KnowledgeBase();
-            });
+            const startButton = document.getElementById('start-button');
+            if (startButton) {
+                startButton.addEventListener('click', () => {
+                    document.querySelector('.hero').classList.add('hidden');
+                    document.getElementById('app').classList.remove('hidden');
+                    window.kb = new KnowledgeBase();
+                });
+            }
         });
     </script>
 </body>
