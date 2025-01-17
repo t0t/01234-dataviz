@@ -1,9 +1,9 @@
 from http.server import HTTPServer, SimpleHTTPRequestHandler
-import json
-from pathlib import Path
+from livereload import Server
 import os
+import json
 
-class KnowledgeBaseHandler(SimpleHTTPRequestHandler):
+class CORSRequestHandler(SimpleHTTPRequestHandler):
     def do_PUT(self):
         if self.path == '/save':
             content_length = int(self.headers['Content-Length'])
@@ -35,13 +35,22 @@ class KnowledgeBaseHandler(SimpleHTTPRequestHandler):
 
     def end_headers(self):
         self.send_header('Access-Control-Allow-Origin', '*')
-        SimpleHTTPRequestHandler.end_headers(self)
+        self.send_header('Access-Control-Allow-Methods', 'GET')
+        self.send_header('Cache-Control', 'no-store, no-cache, must-revalidate')
+        return super().end_headers()
 
-def run(server_class=HTTPServer, handler_class=KnowledgeBaseHandler, port=8000):
-    server_address = ('', port)
-    httpd = server_class(server_address, handler_class)
-    print(f'Starting server on port {port}...')
-    httpd.serve_forever()
+def main():
+    # Crear servidor livereload
+    server = Server()
+    
+    # Observar archivos
+    server.watch('*.html')
+    server.watch('js/*.js')
+    server.watch('styles/*.css')
+    server.watch('data.json')
+    
+    # Servir archivos estáticos
+    server.serve(port=8000, host='localhost', root='.')
 
 if __name__ == '__main__':
-    run()
+    main()

@@ -208,19 +208,7 @@ class KnowledgeBase {
             .text(d => d.tags.join(", "));
 
         // Evento de clic
-        node.on("click", (event, d) => {
-            event.stopPropagation();
-            
-            // Desexpandir todos los nodos
-            this.g.selectAll(".node").classed("expanded", false);
-            
-            // Expandir solo el nodo clicado
-            const clickedNode = d3.select(event.currentTarget);
-            clickedNode.classed("expanded", true);
-            
-            // Detener la simulación temporalmente
-            this.simulation.alphaTarget(0);
-        });
+        node.on("click", (event, d) => this.handleNodeClick(event, d));
 
         // Clic en el fondo para cerrar nodo expandido
         this.svg.on("click", () => {
@@ -229,6 +217,50 @@ class KnowledgeBase {
         });
 
         return node;
+    }
+
+    handleNodeClick(d) {
+        const isExpanded = d3.select(d.currentTarget).classed('expanded');
+        
+        // Contraer todos los nodos
+        this.svg.selectAll('.node').classed('expanded', false);
+        
+        if (!isExpanded) {
+            // Expandir el nodo clickeado
+            d3.select(d.currentTarget).classed('expanded', true);
+            
+            // Mostrar sidebar con detalles
+            const sidebar = document.getElementById('sidebar');
+            const entryDetails = document.getElementById('entry-details');
+            
+            // Formatear contenido para el sidebar
+            const entry = d.target.__data__;
+            const formattedDate = new Date(entry.modified).toLocaleString();
+            
+            entryDetails.innerHTML = `
+                <div class="entry-item">
+                    <div class="entry-content">${entry.content}</div>
+                    <div class="entry-meta">Modified: ${formattedDate}</div>
+                    <div class="entry-tags">
+                        ${entry.tags.map(tag => `<span class="tag">${tag}</span>`).join('')}
+                    </div>
+                </div>
+            `;
+            
+            sidebar.classList.add('open');
+        } else {
+            // Cerrar sidebar
+            document.getElementById('sidebar').classList.remove('open');
+        }
+        
+        // Pausar simulación cuando un nodo está expandido
+        if (this.simulation) {
+            if (!isExpanded) {
+                this.simulation.alpha(0.1).restart();
+            } else {
+                this.simulation.alpha(0);
+            }
+        }
     }
 
     // Función auxiliar para envolver texto

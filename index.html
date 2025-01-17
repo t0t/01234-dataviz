@@ -4,16 +4,30 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Knowledge Base D3 Force</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles/main.css">
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body>
     <svg id="canvas"></svg>
+    <div id="sidebar" class="sidebar">
+        <div id="sidebar-content">
+            <h2>Entry Details</h2>
+            <div id="entry-details"></div>
+        </div>
+    </div>
     <script src="js/KnowledgeBase.js"></script>
     <script>
         // Inicialización
         const kb = new KnowledgeBase();
+        kb.initialize();
+    </script>
+    <script>
+        document.write('<script src="http://' + (location.host || 'localhost').split(':')[0] +
+        ':35729/livereload.js?snipver=1"></' + 'script>')
     </script>
 </body>
 </html>
