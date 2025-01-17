@@ -7,7 +7,7 @@ class KnowledgeBase {
         this.padding = 40;
         this.center = { x: this.width / 2, y: this.height / 2 };
         this.orbitRadius = Math.min(this.width, this.height) / 3;
-        this.dataPath = '/data/entries.json';
+        this.dataPath = 'data/entries.json';
         
         this.setupGraph();
         this.loadData().then(() => {
@@ -49,15 +49,15 @@ class KnowledgeBase {
             .alphaDecay(0.05)
             .velocityDecay(0.4);
 
-        // Zoom mejorado
+        // Zoom (solo doble clic para resetear)
         const zoom = d3.zoom()
-            .extent([[0, 0], [this.width, this.height]])
-            .scaleExtent([0.1, 4])
+            .scaleExtent([1, 1]) // Forzar escala 1:1
             .on("zoom", (event) => {
                 this.g.attr("transform", event.transform);
             });
 
-        this.svg.call(zoom);
+        this.svg.call(zoom)
+            .on("wheel.zoom", null); // Desactivar zoom con rueda del ratón
         
         // Doble click para centrar
         this.svg.on("dblclick.zoom", () => {
