@@ -27,7 +27,7 @@ Una aplicación web interactiva para visualizar y explorar una base de conocimie
 
 ## Demo
 
-Puedes ver una demo en vivo [aquí](https://TU_USUARIO.github.io/TU_REPO)
+Puedes ver una demo en vivo [aquí](https://t0t.github.io/01234-dataviz)
 
 ## Desarrollo
 
