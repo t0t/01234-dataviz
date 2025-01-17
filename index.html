@@ -12,10 +12,10 @@
 <body>
     <nav style="position: fixed" class="mainnav flex">
         <img style="max-width: 50px;" src="images/logo.png" alt="Logo" class="logo">
-        <button id="toggle-sidebar" aria-label="Toggle Sidebar"></button>
     </nav>
 
     <!-- App Section -->
+    <button id="toggle-sidebar" aria-label="Show Sidebar" aria-expanded="false"></button>
     <div id="app" class="app hidden">
         <div id="sidebar">
             <div id="entry-details"></div>
@@ -31,9 +31,7 @@
     </div>
 
     <!-- Canvas -->
-    <section>
-        <canvas id="nodes-canvas"></canvas>
-    </section>
+    <canvas id="nodes-canvas"></canvas>
 
     <!-- Features Section -->
     <section class="features">
@@ -58,7 +56,10 @@
     <script>
         document.getElementById('toggle-sidebar').addEventListener('click', function() {
             const app = document.getElementById('app');
-            app.classList.toggle('hidden');
+            const isHidden = app.classList.toggle('hidden');
+            this.classList.toggle('active');
+            this.setAttribute('aria-label', isHidden ? 'Show Sidebar' : 'Hide Sidebar');
+            this.setAttribute('aria-expanded', !isHidden);
         });
     </script>
 </body>
