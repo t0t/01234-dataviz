@@ -10,7 +10,7 @@
 </head>
 
 <body>
-    <nav style="position: fixed" class="mainnav grid grid-template-columns">
+    <nav style="position: fixed" class="mainnav flex">
         <img style="max-width: 50px;" src="images/logo.png" alt="Logo" class="logo">
         <button id="toggle-sidebar" aria-label="Toggle Sidebar"></button>
     </nav>
@@ -55,6 +55,12 @@
     </section>
 
     <script src="js/KnowledgeBase.js"></script>
+    <script>
+        document.getElementById('toggle-sidebar').addEventListener('click', function() {
+            const app = document.getElementById('app');
+            app.classList.toggle('hidden');
+        });
+    </script>
 </body>
 
 </html>

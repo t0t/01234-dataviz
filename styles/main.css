@@ -87,12 +87,15 @@
 
 /* Base Styles */
 body { 
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    background-color: var(--color-background);
+    color: var(--color-text);
     font-family: var(--font-family);
     font-size: var(--font-size-base);
     line-height: var(--line-height);
-    background: var(--color-background);
-    color: var(--color-text);
-    overflow: hidden;
 }
 
 html {
@@ -742,4 +745,13 @@ body {
 
 .hidden {
     display: none;
+}
+
+#app {
+    transition: transform 0.3s ease-in-out;
+    transform: translateX(0);
+}
+
+#app.hidden {
+    transform: translateX(-100%);
 }
