@@ -18,159 +18,74 @@ class KnowledgeBase {
     }
 
     setupGraph() {
-        this.svg = d3.select("#canvas")
-            .attr("width", this.width)
-            .attr("height", this.height);
-
-        // Añadir órbita
-        this.svg.append("circle")
-            .attr("class", "orbit")
-            .attr("cx", this.center.x)
-            .attr("cy", this.center.y)
-            .attr("r", this.orbitRadius)
-            .style("fill", "none")
-            .style("stroke", "#fff")
-            .style("stroke-opacity", 0.1);
-
-        this.simulation = d3.forceSimulation()
-            .force("link", d3.forceLink().id(d => d.id)
-                .distance(100)
-                .strength(0.2))
-            .force("charge", d3.forceManyBody()
-                .strength(-150)
-                .distanceMax(300))
-            .force("center", d3.forceCenter(this.width / 2, this.height / 2))
-            .force("collision", d3.forceCollide().radius(40))
-            .alphaDecay(0.05) // Más lento pero más estable
-            .velocityDecay(0.4); // Más amortiguación
-
+        this.svg = d3.select("#canvas");
         this.g = this.svg.append("g");
 
-        // Zoom mejorado
+        // Configurar fuerzas de simulación
+        this.simulation = d3.forceSimulation()
+            .force("link", d3.forceLink().id(d => d.id).distance(100))
+            .force("charge", d3.forceManyBody().strength(-300))
+            .force("center", d3.forceCenter(this.width / 2, this.height / 2))
+            .force("collision", d3.forceCollide().radius(this.nodeRadius * 1.5));
+
+        // Zoom
         const zoom = d3.zoom()
-            .extent([[0, 0], [this.width, this.height]])
             .scaleExtent([0.1, 4])
             .on("zoom", (event) => {
                 this.g.attr("transform", event.transform);
             });
 
         this.svg.call(zoom);
-        
-        // Doble click para centrar
-        this.svg.on("dblclick.zoom", () => {
-            this.svg.transition()
-                .duration(750)
-                .call(zoom.transform, d3.zoomIdentity);
-        });
     }
 
     async loadData() {
         try {
-            // Cargar datos estáticos
-            this.data = {
-                "entries": [
-                    {
-                        "id": "1737134810672",
-                        "content": "rthwrhrw",
-                        "tags": [],
-                        "created": "2025-01-17T17:26:50.672Z",
-                        "modified": "2025-01-17T17:26:50.672Z"
-                    },
-                    {
-                        "id": "1737134808355",
-                        "content": "rwthrthr",
-                        "tags": [],
-                        "created": "2025-01-17T17:26:48.355Z",
-                        "modified": "2025-01-17T17:26:48.355Z"
-                    },
-                    {
-                        "id": "1737134806454",
-                        "content": "thrwht",
-                        "tags": [
-                            "agua"
-                        ],
-                        "created": "2025-01-17T17:26:46.455Z",
-                        "modified": "2025-01-17T17:26:46.455Z"
-                    },
-                    {
-                        "id": "1737134804272",
-                        "content": "wrth",
-                        "tags": [
-                            "wrth",
-                            "agua"
-                        ],
-                        "created": "2025-01-17T17:26:44.272Z",
-                        "modified": "2025-01-17T17:26:44.272Z"
-                    },
-                    {
-                        "id": "1737134800264",
-                        "content": "wrht",
-                        "tags": [
-                            "we"
-                        ],
-                        "created": "2025-01-17T17:26:40.264Z",
-                        "modified": "2025-01-17T17:26:40.265Z"
-                    }
-                ],
-                "metadata": {
-                    "lastUpdate": "2025-01-17T18:19:15",
-                    "version": "1.0"
-                }
-            };
-            
-            // Crear enlaces basados en contenido común
-            this.links = [];
-            const entries = Object.values(this.data.entries);
-            
-            entries.forEach((source, i) => {
-                entries.slice(i + 1).forEach(target => {
-                    // Buscar palabras comunes en el contenido
-                    const sourceWords = source.content.toLowerCase().split(/\s+/);
-                    const targetWords = target.content.toLowerCase().split(/\s+/);
-                    const commonWords = sourceWords.filter(word => 
-                        word.length > 4 && targetWords.includes(word)
-                    );
-                    
-                    // Buscar tags comunes
-                    const commonTags = source.tags.filter(tag => 
-                        target.tags.includes(tag)
-                    );
-                    
-                    // Si hay palabras o tags en común, crear enlace
-                    if (commonWords.length > 0 || commonTags.length > 0) {
-                        this.links.push({
-                            source: source.id,
-                            target: target.id,
-                            value: commonWords.length + commonTags.length,
-                            commonWords,
-                            commonTags
-                        });
-                    }
-                });
-            });
-            
+            const response = await fetch('data/entries.json');
+            this.data = await response.json();
             this.updateGraph();
         } catch (error) {
             console.error('Error loading data:', error);
+            this.data = { entries: [] };
         }
     }
 
     updateGraph() {
         const nodes = this.data.entries;
-        const links = this.links;
-
-        this.g.selectAll("*").remove();
+        const links = this.generateLinks(nodes);
+        
         this.drawLinks(links);
         this.drawNodes(nodes);
         this.setupSimulation(nodes, links);
     }
 
+    generateLinks(nodes) {
+        const links = [];
+        const nodeMap = new Map(nodes.map(node => [node.id, node]));
+
+        nodes.forEach(source => {
+            nodes.forEach(target => {
+                if (source.id !== target.id) {
+                    // Crear enlaces basados en tags comunes
+                    const commonTags = source.tags.filter(tag => target.tags.includes(tag));
+                    if (commonTags.length > 0) {
+                        links.push({ source: source.id, target: target.id, value: commonTags.length });
+                    }
+                }
+            });
+        });
+
+        return links;
+    }
+
     drawLinks(links) {
-        return this.g.append("g")
+        this.g.selectAll(".link").remove();
+        
+        this.g.append("g")
             .selectAll("line")
             .data(links)
             .join("line")
-            .attr("class", "link");
+            .attr("class", "link")
+            .attr("stroke-width", d => Math.sqrt(d.value));
     }
 
     drawNodes(nodes) {
@@ -188,75 +103,81 @@ class KnowledgeBase {
         node.append("circle")
             .attr("r", this.nodeRadius);
 
-        // Texto del nodo
-        node.append("text")
-            .attr("dy", ".35em")
-            .text(d => d.content.substring(0, 15) + "...");
+        // Eventos de tooltip
+        const showTooltip = (event, d) => {
+            d3.selectAll(".tooltip").remove();
+            
+            const tooltip = d3.select("body").append("div")
+                .attr("class", "tooltip")
+                .style("left", `${event.clientX}px`)
+                .style("top", `${event.clientY}px`);
+            
+            tooltip.html(`
+                <div>${d.content.substring(0, 50)}...</div>
+                ${d.tags.length ? `<div class="tags">${d.tags.join(", ")}</div>` : ""}
+            `);
+            
+            requestAnimationFrame(() => tooltip.classed("visible", true));
+        };
+
+        const moveTooltip = (event) => {
+            d3.select(".tooltip")
+                .style("left", `${event.clientX}px`)
+                .style("top", `${event.clientY}px`);
+        };
+
+        const hideTooltip = () => {
+            const tooltip = d3.select(".tooltip");
+            tooltip.classed("visible", false);
+            setTimeout(() => tooltip.remove(), 200);
+        };
+
+        node.on("mouseover", showTooltip)
+            .on("mousemove", moveTooltip)
+            .on("mouseout", hideTooltip);
 
         // Evento de clic
         node.on("click", (event, d) => {
             event.stopPropagation();
-            this.handleNodeClick(event, d);
+            this.handleNodeClick(d);
         });
 
         return node;
     }
 
-    handleNodeClick(event, d) {
-        // Desactivar cualquier nodo expandido previamente
-        const wasExpanded = d3.select(event.currentTarget).classed("expanded");
-        this.g.selectAll(".node").classed("expanded", false);
+    handleNodeClick(d) {
+        this.currentEntry = d;
         
-        if (!wasExpanded) {
-            // Expandir el nodo actual
-            d3.select(event.currentTarget).classed("expanded", true);
-            
-            // Mostrar detalles en el sidebar
-            const sidebar = document.getElementById('sidebar');
-            const entryDetails = document.getElementById('entry-details');
-            
-            const formattedDate = new Date(d.modified).toLocaleString();
-            
-            entryDetails.innerHTML = `
-                <div class="entry-item">
-                    <div class="entry-content">${d.content}</div>
-                    <div class="entry-meta">Modified: ${formattedDate}</div>
-                    <div class="entry-tags">
-                        ${d.tags.map(tag => `<span class="tag">${tag}</span>`).join('')}
-                    </div>
+        // Actualizar panel de edición
+        document.getElementById('content-editor').value = d.content;
+        document.getElementById('tags-input').value = d.tags.join(', ');
+        
+        // Mostrar detalles en el sidebar
+        const sidebar = document.getElementById('sidebar');
+        const entryDetails = document.getElementById('entry-details');
+        
+        const formattedDate = new Date(d.modified).toLocaleString();
+        
+        entryDetails.innerHTML = `
+            <div class="entry-item">
+                <div class="entry-content">${d.content}</div>
+                <div class="entry-meta">Modified: ${formattedDate}</div>
+                <div class="entry-tags">
+                    ${d.tags.map(tag => `<span class="tag">${tag}</span>`).join('')}
                 </div>
-            `;
-            
-            sidebar.classList.add('open');
-            document.getElementById('toggle-sidebar').classList.add('active');
-        } else {
-            // Cerrar sidebar
-            document.getElementById('sidebar').classList.remove('open');
-            document.getElementById('toggle-sidebar').classList.remove('active');
-        }
+            </div>
+        `;
+        
+        sidebar.classList.add('open');
+        document.getElementById('toggle-sidebar').classList.add('active');
     }
 
     setupSimulation(nodes, links) {
-        // Detener simulación anterior si existe
         if (this.simulation) this.simulation.stop();
 
         this.simulation
             .nodes(nodes)
             .force("link").links(links);
-
-        // Añadir fuerza de colisión
-        this.simulation.force("collision", d3.forceCollide().radius(this.nodeRadius * 2));
-
-        // Fuerza de centro
-        this.simulation.force("center", d3.forceCenter(this.width / 2, this.height / 2));
-
-        // Mantener nodos dentro de los límites
-        this.simulation.force("bounds", () => {
-            nodes.forEach(node => {
-                node.x = Math.max(this.nodeRadius, Math.min(this.width - this.nodeRadius, node.x));
-                node.y = Math.max(this.nodeRadius, Math.min(this.height - this.nodeRadius, node.y));
-            });
-        });
 
         this.simulation.on("tick", () => {
             // Actualizar posición de enlaces
@@ -271,7 +192,6 @@ class KnowledgeBase {
                 .attr("transform", d => `translate(${d.x},${d.y})`);
         });
 
-        // Reiniciar simulación
         this.simulation.alpha(1).restart();
     }
 
@@ -321,6 +241,35 @@ class KnowledgeBase {
         }
     }
 
+    newEntry() {
+        // Limpiar entrada actual
+        this.currentEntry = null;
+        
+        // Limpiar formulario
+        document.getElementById('content-editor').value = '';
+        document.getElementById('tags-input').value = '';
+        
+        // Limpiar panel de detalles
+        document.getElementById('entry-details').innerHTML = '';
+        
+        // Mostrar el panel de edición
+        const sidebar = document.getElementById('sidebar');
+        sidebar.classList.add('open');
+        document.getElementById('toggle-sidebar').classList.add('active');
+        
+        // Enfocar el editor
+        document.getElementById('content-editor').focus();
+    }
+
+    clearEditor() {
+        document.getElementById('content-editor').value = '';
+        document.getElementById('tags-input').value = '';
+        this.currentEntry = null;
+        
+        // Limpiar panel de detalles
+        document.getElementById('entry-details').innerHTML = '';
+    }
+
     saveEntry() {
         const content = document.getElementById('content-editor').value;
         const tags = document.getElementById('tags-input').value
@@ -347,17 +296,24 @@ class KnowledgeBase {
 
         this.saveData();
         this.clearEditor();
-    }
-
-    newEntry() {
-        this.currentEntry = null;
-        this.clearEditor();
-    }
-
-    clearEditor() {
-        document.getElementById('content-editor').value = '';
-        document.getElementById('tags-input').value = '';
-        this.currentEntry = null;
+        
+        // Actualizar el gráfico
+        this.updateGraph();
+        
+        // Mostrar mensaje de confirmación
+        const entryDetails = document.getElementById('entry-details');
+        entryDetails.innerHTML = `
+            <div class="entry-item success">
+                <div class="entry-content">Entry saved successfully!</div>
+            </div>
+        `;
+        
+        // Limpiar mensaje después de 2 segundos
+        setTimeout(() => {
+            if (!this.currentEntry) {
+                entryDetails.innerHTML = '';
+            }
+        }, 2000);
     }
 
     renderEntries(entries = this.data.entries) {

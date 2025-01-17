@@ -16,8 +16,25 @@
     <button id="toggle-sidebar">☰</button>
     <div id="sidebar" class="sidebar">
         <div id="sidebar-content">
-            <h2>Entry Details</h2>
+            <h2>Knowledge Base</h2>
+            
+            <!-- Panel de Edición -->
+            <div id="edit-panel">
+                <h3>Edit Entry</h3>
+                <textarea id="content-editor" placeholder="Write your content here..."></textarea>
+                <input type="text" id="tags-input" placeholder="Tags (comma separated)">
+                <div class="button-group">
+                    <button id="save" class="primary">Save</button>
+                    <button id="new-entry">New Entry</button>
+                    <button id="export-pdf">Export PDF</button>
+                </div>
+            </div>
+
+            <!-- Panel de Detalles -->
             <div id="entry-details"></div>
+
+            <!-- Lista de Entradas -->
+            <div id="entries-list"></div>
         </div>
     </div>
     <script src="js/KnowledgeBase.js"></script>
