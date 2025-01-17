@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>D3 Radial Example</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        body { margin: 0; background: #111; }
+        svg { width: 100vw; height: 100vh; }
+        .node circle { 
+            fill: #fff;
+            stroke: #666;
+            stroke-width: 1.5px;
+        }
+        .node text {
+            fill: white;
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            font-size: 12px;
+        }
+        .link {
+            stroke: #666;
+            stroke-opacity: 0.3;
+        }
+        .orbit {
+            fill: none;
+            stroke: #666;
+            stroke-opacity: 0.2;
+        }
+    </style>
+</head>
+<body>
+    <svg></svg>
+    <script>
+        // Simulación de datos
+        const data = {
+            entries: [
+                { id: "1", content: "JavaScript", tags: ["programming", "web"] },
+                { id: "2", content: "Python", tags: ["programming", "data"] },
+                { id: "3", content: "D3.js", tags: ["web", "visualization"] },
+                { id: "4", content: "HTML", tags: ["web"] },
+                { id: "5", content: "CSS", tags: ["web", "design"] },
+                { id: "6", content: "SQL", tags: ["data", "database"] },
+                { id: "7", content: "React", tags: ["web", "programming"] },
+                { id: "8", content: "Vue", tags: ["web", "programming"] }
+            ]
+        };
+
+        // Configuración
+        const width = window.innerWidth;
+        const height = window.innerHeight;
+        const center = { x: width / 2, y: height / 2 };
+        const radius = Math.min(width, height) / 3;
+
+        // Crear SVG
+        const svg = d3.select("svg")
+            .attr("width", width)
+            .attr("height", height);
+
+        // Procesar datos
+        const nodes = data.entries;
+        const links = [];
+
+        // Crear enlaces
+        nodes.forEach((source, i) => {
+            nodes.forEach((target, j) => {
+                if (i < j) {
+                    const commonTags = source.tags.filter(t => target.tags.includes(t));
+                    if (commonTags.length > 0) {
+                        links.push({
+                            source: source.id,
+                            target: target.id,
+                            value: commonTags.length
+                        });
+                    }
+                }
+            });
+        });
+
+        // Dibujar órbita
+        svg.append("circle")
+            .attr("class", "orbit")
+            .attr("cx", center.x)
+            .attr("cy", center.y)
+            .attr("r", radius);
+
+        // Simulación
+        const simulation = d3.forceSimulation(nodes)
+            .force("link", d3.forceLink(links)
+                .id(d => d.id)
+                .distance(100))
+            .force("charge", d3.forceManyBody().strength(-300))
+            .force("center", d3.forceCenter(width / 2, height / 2))
+            .force("radial", d3.forceRadial(radius, width / 2, height / 2).strength(0.8))
+            .force("collision", d3.forceCollide().radius(30));
+
+        // Dibujar enlaces
+        const link = svg.append("g")
+            .selectAll("line")
+            .data(links)
+            .join("line")
+            .attr("class", "link");
+
+        // Dibujar nodos
+        const node = svg.append("g")
+            .selectAll("g")
+            .data(nodes)
+            .join("g")
+            .attr("class", "node")
+            .call(d3.drag()
+                .on("start", dragstarted)
+                .on("drag", dragged)
+                .on("end", dragended));
+
+        node.append("circle")
+            .attr("r", 8)
+            .style("fill", (d, i) => d3.interpolateRainbow(i / nodes.length));
+
+        node.append("text")
+            .attr("dx", 12)
+            .attr("dy", 4)
+            .text(d => d.content);
+
+        // Funciones de arrastre
+        function dragstarted(event) {
+            if (!event.active) simulation.alphaTarget(0.3).restart();
+            event.subject.fx = event.subject.x;
+            event.subject.fy = event.subject.y;
+        }
+
+        function dragged(event) {
+            event.subject.fx = event.x;
+            event.subject.fy = event.y;
+        }
+
+        function dragended(event) {
+            if (!event.active) simulation.alphaTarget(0);
+            event.subject.fx = null;
+            event.subject.fy = null;
+        }
+
+        // Actualización
+        simulation.on("tick", () => {
+            link
+                .attr("x1", d => d.source.x)
+                .attr("y1", d => d.source.y)
+                .attr("x2", d => d.target.x)
+                .attr("y2", d => d.target.y);
+
+            node.attr("transform", d => `translate(${d.x},${d.y})`);
+        });
+
+        // Zoom
+        svg.call(d3.zoom()
+            .extent([[0, 0], [width, height]])
+            .scaleExtent([0.1, 4])
+            .on("zoom", zoomed));
+
+        function zoomed(event) {
+            link.attr("transform", event.transform);
+            node.attr("transform", d => {
+                return `translate(${event.transform.applyX(d.x)},${event.transform.applyY(d.y)})`;
+            });
+        }
+    </script>
+</body>
+</html>

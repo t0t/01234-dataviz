@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>D3 Cluster Example</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        body { margin: 0; background: #111; }
+        svg { width: 100vw; height: 100vh; }
+        .node circle { 
+            fill: #fff;
+            stroke: #666;
+            stroke-width: 1.5px;
+        }
+        .node text {
+            fill: white;
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            font-size: 12px;
+        }
+        .link {
+            stroke: #666;
+            stroke-opacity: 0.3;
+        }
+        .group {
+            stroke: #fff;
+            stroke-width: 1.5px;
+            stroke-opacity: 0.4;
+            fill-opacity: 0.1;
+        }
+    </style>
+</head>
+<body>
+    <svg></svg>
+    <script>
+        // Simulación de datos (similar a tu estructura)
+        const data = {
+            entries: [
+                { id: "1", content: "JavaScript", tags: ["programming", "web"] },
+                { id: "2", content: "Python", tags: ["programming", "data"] },
+                { id: "3", content: "D3.js", tags: ["web", "visualization"] },
+                { id: "4", content: "HTML", tags: ["web"] },
+                { id: "5", content: "CSS", tags: ["web", "design"] },
+                { id: "6", content: "SQL", tags: ["data", "database"] },
+                { id: "7", content: "React", tags: ["web", "programming"] },
+                { id: "8", content: "Vue", tags: ["web", "programming"] }
+            ]
+        };
+
+        // Configuración
+        const width = window.innerWidth;
+        const height = window.innerHeight;
+        const padding = 100;
+
+        // Crear SVG
+        const svg = d3.select("svg")
+            .attr("width", width)
+            .attr("height", height);
+
+        // Procesar datos
+        const nodes = data.entries;
+        const links = [];
+        const groups = {};
+
+        // Crear enlaces y grupos
+        nodes.forEach((source, i) => {
+            nodes.forEach((target, j) => {
+                if (i < j) {
+                    const commonTags = source.tags.filter(t => target.tags.includes(t));
+                    if (commonTags.length > 0) {
+                        links.push({
+                            source: source.id,
+                            target: target.id,
+                            value: commonTags.length
+                        });
+                    }
+                }
+            });
+
+            // Agrupar por tags
+            source.tags.forEach(tag => {
+                if (!groups[tag]) {
+                    groups[tag] = {
+                        tag,
+                        nodes: []
+                    };
+                }
+                groups[tag].nodes.push(source.id);
+            });
+        });
+
+        // Crear hulls para los grupos
+        const hulls = Object.values(groups);
+
+        // Simulación
+        const simulation = d3.forceSimulation(nodes)
+            .force("link", d3.forceLink(links)
+                .id(d => d.id)
+                .distance(100))
+            .force("charge", d3.forceManyBody().strength(-300))
+            .force("center", d3.forceCenter(width / 2, height / 2))
+            .force("collision", d3.forceCollide().radius(30));
+
+        // Dibujar enlaces
+        const link = svg.append("g")
+            .selectAll("line")
+            .data(links)
+            .join("line")
+            .attr("class", "link");
+
+        // Dibujar grupos
+        const groupPaths = svg.append("g")
+            .selectAll("path")
+            .data(hulls)
+            .join("path")
+            .attr("class", "group")
+            .style("fill", (d, i) => d3.interpolateRainbow(i / hulls.length));
+
+        // Dibujar nodos
+        const node = svg.append("g")
+            .selectAll("g")
+            .data(nodes)
+            .join("g")
+            .attr("class", "node")
+            .call(d3.drag()
+                .on("start", dragstarted)
+                .on("drag", dragged)
+                .on("end", dragended));
+
+        node.append("circle")
+            .attr("r", 8);
+
+        node.append("text")
+            .attr("dx", 12)
+            .attr("dy", 4)
+            .text(d => d.content);
+
+        // Funciones de arrastre
+        function dragstarted(event) {
+            if (!event.active) simulation.alphaTarget(0.3).restart();
+            event.subject.fx = event.subject.x;
+            event.subject.fy = event.subject.y;
+        }
+
+        function dragged(event) {
+            event.subject.fx = event.x;
+            event.subject.fy = event.y;
+        }
+
+        function dragended(event) {
+            if (!event.active) simulation.alphaTarget(0);
+            event.subject.fx = null;
+            event.subject.fy = null;
+        }
+
+        // Actualización
+        simulation.on("tick", () => {
+            // Actualizar enlaces
+            link
+                .attr("x1", d => d.source.x)
+                .attr("y1", d => d.source.y)
+                .attr("x2", d => d.target.x)
+                .attr("y2", d => d.target.y);
+
+            // Actualizar nodos
+            node.attr("transform", d => `translate(${d.x},${d.y})`);
+
+            // Actualizar grupos
+            groupPaths.attr("d", d => {
+                const points = d.nodes
+                    .map(id => nodes.find(n => n.id === id))
+                    .map(n => [n.x, n.y]);
+                return `M${d3.polygonHull(points).join("L")}Z`;
+            });
+        });
+    </script>
+</body>
+</html>
