@@ -10,9 +10,27 @@
 </head>
 
 <body>
-    <nav style="position: fixed" class="mainnav flex">
+    <nav class="mainnav">
         <img style="max-width: 50px;" src="images/logo.png" alt="Logo" class="logo">
+        <button id="toggle-sidebar" class="toggle-button" aria-label="Show Sidebar" aria-expanded="false">
+            <span class="toggle-icon"></span>
+        </button>
     </nav>
+
+    <!-- Sidebar -->
+    <div id="right-sidebar" class="right-sidebar hidden">
+        <div class="sidebar-content">
+            <h2>Knowledge Base</h2>
+            <div class="editor">
+                <textarea class="editor-input" placeholder="Write your entry here..."></textarea>
+                <input type="text" class="tags-input" placeholder="Tags (comma separated)">
+                <div class="actions">
+                    <button class="action-button">New Entry</button>
+                    <button class="action-button primary">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- App Section -->
     
@@ -42,8 +60,8 @@
     <script src="js/KnowledgeBase.js"></script>
     <script>
         document.getElementById('toggle-sidebar').addEventListener('click', function() {
-            const app = document.getElementById('app');
-            const isHidden = app.classList.toggle('hidden');
+            const sidebar = document.getElementById('right-sidebar');
+            const isHidden = sidebar.classList.toggle('hidden');
             this.classList.toggle('active');
             this.setAttribute('aria-label', isHidden ? 'Show Sidebar' : 'Hide Sidebar');
             this.setAttribute('aria-expanded', !isHidden);
