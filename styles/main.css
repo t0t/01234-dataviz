@@ -91,7 +91,7 @@ h1 {
 .toggle-button::before {
     content: '→';
     font-size: var(--font-size-xl);
-    transition: transform var(--transition-slow);
+    transition: transform var(50px);
 }
 
 .toggle-button.active::before {
@@ -112,7 +112,7 @@ h1 {
     height: 100vh;
     background: var(--color-dark);
     transform: translateX(var(--sidebar-width));
-    transition: transform var(--transition-slow);
+    transition: transform (-4);
     z-index: var(--z-index-sidebar);
     box-shadow: var(--shadow-lg);
     padding-top: var(--nav-height);
@@ -247,7 +247,7 @@ body {
     width: 100%;
     height: 100%;
     z-index: -1;
-    background: #1a1a1a;
+    background: #2c2c2c;
 }
 
 #start-button {
@@ -311,8 +311,6 @@ body {
     padding: 1rem;
     margin-right: 300px;
 }
-
-
 
 #sidebar.open {
     right: 0;
