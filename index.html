@@ -1,74 +1,24 @@
 <!DOCTYPE html>
-<html lang="es">
-
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Knowledge Base</title>
-    <link rel="icon" type="image/x-icon" href="data:image/x-icon;base64,AAABAAEAEBAQAAEABAAoAQAAFgAAACgAAAAQAAAAIAAAAAEABAAAAAAAgAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAA/4QAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEREQAAAAAAEAAAEAAAAAEAAAABAAAAEAAAAAAQAAAQAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAEAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD//wAA//8AAP//AAD8HwAA++8AAPf3AADv+wAA7/sAAP//AAD//wAA+98AAP//AAD//wAA//8AAP//AAD//wAA">
-    <script src="https://d3js.org/d3.v7.min.js"></script>
-    <link rel="stylesheet" href="styles/main.css">
+    <title>Círculos conectados</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
+    <style>
+        body { 
+            margin: 0; 
+            padding: 0; 
+            overflow: hidden; 
+            background: #2c2c2c;
+        }
+        canvas { 
+            display: block; 
+        }
+    </style>
 </head>
-
 <body>
-    <nav class="mainnav">
-        <h1>My Data viz</h1>
-        <img style="max-width: 50px;" src="images/logo.png" alt="Logo" class="logo">
-        <button id="toggle-sidebar" class="toggle-button" aria-label="Show Sidebar" aria-expanded="false">
-            <span class="toggle-icon"></span>
-        </button>
-    </nav>
-
-    <!-- Sidebar -->
-    <div id="right-sidebar" class="right-sidebar hidden">
-        <div class="sidebar-content">
-            <h2>Knowledge Base</h2>
-            <div class="editor">
-                <textarea class="editor-input" placeholder="Write your entry here..."></textarea>
-                <input type="text" class="tags-input" placeholder="Tags (comma separated)">
-                <div class="actions">
-                    <button class="action-button">New Entry</button>
-                    <button class="action-button primary">Save</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- App Section -->
-    
-
-    <!-- Canvas -->
-    <canvas id="nodes-canvas"></canvas>
-
-    <!-- Features Section -->
-    <section class="features">
-        <h2>Features</h2>
-        <div class="features-grid">
-            <div class="feature">
-                <h3>Visual Organization</h3>
-                <p>See your knowledge as an interactive network of connected ideas.</p>
-            </div>
-            <div class="feature">
-                <h3>Smart Connections</h3>
-                <p>Automatically discover relationships between your notes.</p>
-            </div>
-            <div class="feature">
-                <h3>Easy Editing</h3>
-                <p>Simple and intuitive interface for managing your knowledge base.</p>
-            </div>
-        </div>
-    </section>
-
+    <div id="nodes-canvas"></div>
     <script src="js/KnowledgeBase.js"></script>
-    <script>
-        document.getElementById('toggle-sidebar').addEventListener('click', function() {
-            const sidebar = document.getElementById('right-sidebar');
-            const isHidden = sidebar.classList.toggle('hidden');
-            this.classList.toggle('active');
-            this.setAttribute('aria-label', isHidden ? 'Show Sidebar' : 'Hide Sidebar');
-            this.setAttribute('aria-expanded', !isHidden);
-        });
-    </script>
 </body>
-
 </html>

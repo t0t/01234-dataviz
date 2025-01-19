@@ -1,6 +1,11 @@
-const express = require('express');
-const fs = require('fs').promises;
-const path = require('path');
+import express from 'express';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
+import fs from 'fs/promises';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
 const app = express();
 const port = 3000;
 
@@ -20,7 +25,7 @@ app.use((req, res, next) => {
 app.get('/data/entries.json', async (req, res) => {
     try {
         const data = await fs.readFile(
-            path.join(__dirname, 'data', 'entries.json'),
+            join(__dirname, 'data', 'entries.json'),
             'utf8'
         );
         res.json(JSON.parse(data));
@@ -35,7 +40,7 @@ app.post('/save', async (req, res) => {
     try {
         const data = req.body;
         await fs.writeFile(
-            path.join(__dirname, 'data', 'entries.json'),
+            join(__dirname, 'data', 'entries.json'),
             JSON.stringify(data, null, 2)
         );
         console.log('Data saved successfully');

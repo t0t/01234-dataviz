@@ -228,6 +228,96 @@ h1 {
     background: var(--color-background);
 }
 
+/* Etiquetas */
+#labels-container {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    background: rgba(0, 0, 0, 0.7);
+    padding: 15px;
+    border-radius: 5px;
+    display: none;
+    min-width: 300px;
+}
+
+#label-input {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 4px;
+    margin-bottom: 10px;
+    font-size: 14px;
+}
+
+#label-input::placeholder {
+    color: rgba(255, 255, 255, 0.5);
+}
+
+#label-input:focus {
+    outline: none;
+    border-color: rgba(255, 255, 255, 0.4);
+    background: rgba(255, 255, 255, 0.15);
+}
+
+#node-labels {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+}
+
+.label {
+    padding: 5px 10px;
+    border-radius: 15px;
+    font-size: 12px;
+    color: #333;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.label[data-type="0"] {
+    background: white;
+}
+
+.label[data-type="1"] {
+    background: yellow;
+}
+
+.label[data-type="2"] {
+    background: red;
+    color: white;
+}
+
+.label[data-type="3"] {
+    background: blue;
+    color: white;
+}
+
+.label[data-type="4"] {
+    background: brown;
+    color: white;
+}
+
+.label.number {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    font-weight: bold;
+}
+
+.delete-label {
+    cursor: pointer;
+    opacity: 0.6;
+    font-size: 14px;
+    font-weight: bold;
+    margin-left: 3px;
+}
+
+.delete-label:hover {
+    opacity: 1;
+}
+
 /* Landing Page Styles */
 * {
     margin: 0;
@@ -394,4 +484,104 @@ body {
 
 #app.hidden {
     transform: translateX(-100%);
+}
+
+/* Sidebar con etiquetas */
+#sidebar {
+    position: fixed;
+    right: 0;
+    top: 0;
+    width: 300px;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.8);
+    padding: 20px;
+    box-shadow: -2px 0 5px rgba(0,0,0,0.3);
+}
+
+.node-info {
+    margin-top: 20px;
+    padding: 15px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    display: none;
+}
+
+.node-info h3 {
+    color: white;
+    margin: 0 0 15px 0;
+    font-size: 16px;
+}
+
+.tag-selector, .labels-section {
+    margin-bottom: 15px;
+}
+
+.tag-selector label, .labels-section label {
+    display: block;
+    color: rgba(255, 255, 255, 0.7);
+    margin-bottom: 5px;
+    font-size: 14px;
+}
+
+#tag-select {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: white;
+    padding: 8px;
+    border-radius: 4px;
+}
+
+#label-input {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 4px;
+    margin-bottom: 10px;
+    font-size: 14px;
+}
+
+#label-input::placeholder {
+    color: rgba(255, 255, 255, 0.5);
+}
+
+#label-input:focus {
+    outline: none;
+    border-color: rgba(255, 255, 255, 0.4);
+    background: rgba(255, 255, 255, 0.15);
+}
+
+#node-labels {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+}
+
+.label {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 5px 10px;
+    border-radius: 15px;
+    font-size: 12px;
+    color: white;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.label.number {
+    background: rgba(255, 255, 255, 0.2);
+    font-weight: bold;
+}
+
+.delete-label {
+    cursor: pointer;
+    opacity: 0.6;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.delete-label:hover {
+    opacity: 1;
 }
